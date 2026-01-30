@@ -1,0 +1,644 @@
+{
+  "name": "MTRACK",
+  "nodes": [
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {
+          "includeBinaries": false
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        224
+      ],
+      "id": "ea230b90-6a31-4d2d-af00-dbd63f49f42d",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_type = 'BASE TABLE' \n AND table_schema NOT IN ('pg_catalog', 'information_schema')\n ORDER BY table_schema, table_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        224
+      ],
+      "id": "22484014-7acd-46ad-8e32-a75341b6f0c5",
+      "name": "check if table exists",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd2070fe-24a9-4c79-8a46-ef44012aea1e",
+              "leftValue": "={{ $json.data.map(item => item.table_name) }}",
+              "rightValue": "transactions",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        224
+      ],
+      "id": "325eeb22-78e6-493a-8ae4-3837eeb54759",
+      "name": "table exists"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";\nCREATE TABLE transactions (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  description TEXT,\n  amount NUMERIC(12, 2) NOT NULL,\n  card TEXT,\n  card_limit NUMERIC(12, 2) NOT NULL\n)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        288,
+        224
+      ],
+      "id": "e0c10fc7-489c-4c99-a5a0-88f438c3df09",
+      "name": "create",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mtrack",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        544
+      ],
+      "id": "4a579957-8f80-48c6-b4f0-ea29f9cdd1d5",
+      "name": "Webhook",
+      "webhookId": "b56534ca-02ed-4ce2-ad40-405a5f5c9411"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "transactions",
+          "mode": "list",
+          "cachedResultName": "transactions"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        -224
+      ],
+      "id": "a613e326-0321-4cb3-b009-7ad2d8f933d1",
+      "name": "select all",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "transactions",
+          "mode": "list",
+          "cachedResultName": "transactions"
+        },
+        "deleteCommand": "drop",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        0
+      ],
+      "id": "46279c0a-a666-4a73-be3f-6552d757736f",
+      "name": "drop table",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6ae8b175-0932-4d7f-a1cc-9461ee8b5a6f",
+              "name": "date",
+              "value": "={{ (()=>{ const m = $json.body.date.match(/\\s*(\\d+)\\s+(\\w+)\\s+(\\d+),\\s*(\\d+:\\d+)/); const months = {gen:'01',feb:'02',mar:'03',apr:'04',mag:'05',giu:'06',lug:'07',ago:'08',set:'09',ott:'10',nov:'11',dic:'12'}; return `${m[3]}-${months[m[2].toLowerCase()]}-${m[1].padStart(2,'0')}T${m[4]}:00Z`; })() }}",
+              "type": "string"
+            },
+            {
+              "id": "d72a7aa8-0d78-4eb5-9057-b40cf5a2e43f",
+              "name": "amount",
+              "value": "={{ parseFloat($json.body.sms.match(/AED\\s+([\\d,.]+)/)[1].replace(',', '')) }}",
+              "type": "number"
+            },
+            {
+              "id": "988c4f31-85b8-4e54-9652-05d36dbc72cc",
+              "name": "description",
+              "value": "={{ $json.body.sms.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a7a3a732-a206-404c-888f-8b5ace3592c9",
+              "name": "card",
+              "value": "={{ $json.body.sms.match(/ending\\s+(\\d+)/)[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "cb4c3a7b-7724-4b3a-b51f-d6c8c233480e",
+              "name": "card_limit",
+              "value": "={{ parseFloat($json.body.sms.match(/AED\\s+([\\d,.]+)/g)[$json.body.sms.match(/AED\\s+([\\d,.]+)/g).length - 1].replace('AED', '').replace(/,/g, '').trim()) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        544
+      ],
+      "id": "d8c3da21-4e82-4cbf-b7eb-4cdbe27d84f1",
+      "name": "extract info"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "transactions",
+          "mode": "list",
+          "cachedResultName": "transactions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.date }}",
+            "description": "={{ $json.description }}",
+            "amount": "={{ $json.amount }}",
+            "card": "={{ $json.card }}",
+            "card_limit": "={{ $json.card_limit }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "card",
+              "displayName": "card",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "card_limit",
+              "displayName": "card_limit",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        64,
+        448
+      ],
+      "id": "85625521-fc6f-403c-8b8f-ae2ad667627a",
+      "name": "insert transaction",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * , '{{ $json.amount }}'::numeric AS new_amount, '{{ $json.card_limit }}'::numeric AS new_limit\nFROM transactions\nWHERE card = '{{ $json.card }}'\nORDER BY created_at DESC\nLIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        64,
+        640
+      ],
+      "id": "ce4549a9-123b-446c-a03f-572664cd487f",
+      "name": "get last limit for the card",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a93e238b-564e-4135-8d08-16972c77f5d2",
+              "leftValue": "={{ $json.card_limit - $json.new_amount }}",
+              "rightValue": "={{ parseFloat($json.new_limit) }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        640
+      ],
+      "id": "c5c8c7d5-aaa6-424c-849b-4b08b224ebd8",
+      "name": "check card limit"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT SUM(amount) AS total_amount, card\nFROM transactions\nWHERE created_at >= CURRENT_DATE\nGROUP BY card",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -160,
+        864
+      ],
+      "id": "c92354ef-4488-4233-8352-a7a32a14fecb",
+      "name": "get today's transactions",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        64,
+        864
+      ],
+      "id": "3b116c72-33bc-4058-8c6e-8c6b8aad8ce8",
+      "name": "."
+    },
+    {
+      "parameters": {
+        "jsCode": "const transactions = $input.first().json.data;\n\nlet message = \"📅 *Resoconto Spese di Oggi \" + DateTime.now().toISODate() + \"*\\n\\n\";\nlet grandTotal = 0;\n\nfor (const item of transactions) {\n  const amount = parseFloat(item.total_amount);\n  \n  grandTotal += amount;\n  message += `💳 *Carta ${item.card}:* ${amount.toFixed(2)}\\n`;\n}\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE COMPLESSIVO:* ${grandTotal.toFixed(2)}`;\n\nreturn {\n  json: {\n    telegram_text: message\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        864
+      ],
+      "id": "8da1e7cb-9dfa-4036-a839-44b9a873f410",
+      "name": "build message"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.telegram_text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        864
+      ],
+      "id": "f7e38dbb-1cb8-4437-a276-7d6b5dc085e9",
+      "name": "send daily report",
+      "webhookId": "5d197f7a-5cbd-4f67-bcb5-05b060b8b204",
+      "credentials": {
+        "telegramApi": {
+          "id": "9SOQPFDKuQlwEC1o",
+          "name": "N8NTest Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=‼️‼️\nAttenzione, errore rilevato nell' ultima transazione\nLimite atteso -> {{ $json.card_limit - $json.new_amount }}\nLimite attuale -> {{ $json.new_limit }}\nDifferenza di {{ $json.card_limit - $json.new_amount - $json.new_limit }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        640
+      ],
+      "id": "ff72bfa6-37a4-48d6-a881-6e98147a53f8",
+      "name": "send alert",
+      "webhookId": "517d0b1f-eb05-4d94-a4d2-b66bde0bb7af",
+      "credentials": {
+        "telegramApi": {
+          "id": "9SOQPFDKuQlwEC1o",
+          "name": "N8NTest Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 22 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        864
+      ],
+      "id": "a9f0938b-c0a8-4449-a87a-1eabe733f3a4",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "table exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check if table exists": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "table exists": {
+      "main": [
+        [],
+        [
+          {
+            "node": "create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "extract info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract info": {
+      "main": [
+        [
+          {
+            "node": "insert transaction",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "get last limit for the card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert transaction": {
+      "main": [
+        []
+      ]
+    },
+    "get last limit for the card": {
+      "main": [
+        [
+          {
+            "node": "check card limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check card limit": {
+      "main": [
+        [],
+        [
+          {
+            "node": "send alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get today's transactions": {
+      "main": [
+        [
+          {
+            "node": ".",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    ".": {
+      "main": [
+        [
+          {
+            "node": "build message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "build message": {
+      "main": [
+        [
+          {
+            "node": "send daily report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "get today's transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "24fb4a86-4b8f-4995-af2b-5c96d2011c8b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
+  },
+  "id": "gKScnGTDx9JzDynv5olo-",
+  "tags": []
+}
