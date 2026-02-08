@@ -326,7 +326,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * , '{{ $json.amount }}'::numeric AS new_amount, '{{ $json.card_limit }}'::numeric AS new_limit\nFROM transactions\nWHERE card = '{{ $json.card }}'\nORDER BY created_at DESC\nLIMIT 1",
+        "query": "SELECT * , '{{ $json.amount }}'::numeric AS new_amount, '{{ $json.card_limit }}'::numeric AS new_limit\nFROM transactions\nWHERE card = '{{ $json.card }}' AND created_at != '{{ $json.date }}'\nORDER BY created_at DESC\nLIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -355,7 +355,7 @@
           },
           "conditions": [
             {
-              "id": "a93e238b-564e-4135-8d08-16972c77f5d2",
+              "id": "d1365a6e-3972-44f8-aa76-415341841372",
               "leftValue": "={{ $json.card_limit - $json.new_amount }}",
               "rightValue": "={{ parseFloat($json.new_limit) }}",
               "operator": {
@@ -374,7 +374,7 @@
         288,
         640
       ],
-      "id": "c5c8c7d5-aaa6-424c-849b-4b08b224ebd8",
+      "id": "19c957ac-2f05-42c0-8406-2a4f7b576a0c",
       "name": "check card limit"
     },
     {
@@ -630,11 +630,9 @@
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
+    "executionOrder": "v1"
   },
-  "versionId": "24fb4a86-4b8f-4995-af2b-5c96d2011c8b",
+  "versionId": "e76617a7-1d4b-47d9-81a5-c3d837066998",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
