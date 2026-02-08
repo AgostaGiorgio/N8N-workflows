@@ -1,0 +1,248 @@
+{
+  "name": "workflow-of-workflows",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6c12d5b4-4955-4b07-ad30-c30b61ef68fb",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "list",
+        "owner": {
+          "__rl": true,
+          "value": "AgostaGiorgio",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "N8N-workflows",
+          "mode": "list",
+          "cachedResultName": "N8N-workflows",
+          "cachedResultUrl": "https://github.com/AgostaGiorgio/N8N-workflows"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "57da9ecc-cca5-4ddd-802c-6c213b468768",
+      "name": "List files",
+      "webhookId": "c3d92fe7-497d-41d5-9979-669377c71a65",
+      "credentials": {
+        "githubApi": {
+          "id": "AYJncQoZBIHf3NOw",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "95001e6c-7aa4-47d3-a895-0bd211f2ef9a",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "=dir",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        0
+      ],
+      "id": "dfc052e1-0850-4f3f-835d-573adb2e2f98",
+      "name": "Filter folders"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "workflowObject": "={{ $json.content.base64Decode() }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        992,
+        0
+      ],
+      "id": "f3f85936-02c0-49b3-9d35-0774d19dd451",
+      "name": "Create a workflow",
+      "credentials": {
+        "n8nApi": {
+          "id": "OtRrr79lRO4Y661x",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61fb7d1c-e07f-41fd-a224-32a1c5d4557c",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "d903f19d-9e0b-47d3-9211-246f6c6e4ba3",
+              "name": "path",
+              "value": "={{ $json.path }}",
+              "type": "string"
+            },
+            {
+              "id": "4ed6f006-2583-403f-a35f-62e3d98bd89c",
+              "name": "owner",
+              "value": "={{ $json.html_url.split(\"/\")[3] }}",
+              "type": "string"
+            },
+            {
+              "id": "7f201dbb-98d1-4a6e-a86e-f9e29e36f025",
+              "name": "repo",
+              "value": "={{ $json.html_url.split(\"/\")[4] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        0
+      ],
+      "id": "87b6e263-49c0-46dc-b5c5-6a0d3346e092",
+      "name": "Get Important Info"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $json.owner }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $json.repo }}"
+        },
+        "filePath": "={{ $json.path }}/workflow.json",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        0
+      ],
+      "id": "e1612de4-83e6-4278-9c55-95dce479b946",
+      "name": "Get a workflow file",
+      "webhookId": "c2d67d66-b0bf-459d-a3ee-6772606db233",
+      "alwaysOutputData": true,
+      "credentials": {
+        "githubApi": {
+          "id": "AYJncQoZBIHf3NOw",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "List files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List files": {
+      "main": [
+        [
+          {
+            "node": "Filter folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter folders": {
+      "main": [
+        [
+          {
+            "node": "Get Important Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Important Info": {
+      "main": [
+        [
+          {
+            "node": "Get a workflow file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a workflow file": {
+      "main": [
+        [
+          {
+            "node": "Create a workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "53028903-876c-4a7f-a4dc-a943f42666cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
+  },
+  "id": "P8ItwhmyaIPiZ3eJzq8Bt",
+  "tags": []
+}

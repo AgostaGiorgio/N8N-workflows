@@ -14,6 +14,7 @@ The project follows a modular structure where each workflow or automation group 
 .
 ├── LICENSE              # Project license
 ├── README.md            # Main documentation (this file)
+├── wow.json             # WOW (Workflow-of-Workflows) - The main loader
 ├── project_name_1/      # Directory for a specific workflow
 │   ├── README.md        # Specific details, triggers, and requirements
 │   └── workflow.json    # The exported n8n workflow file
@@ -24,7 +25,15 @@ The project follows a modular structure where each workflow or automation group 
 
 ## 🚀 Usage Guide
 
-### How to Import (Restore)
+### 🤖 The WOW (Workflow-of-Workflows) Way (Recommended)
+The `wow.json` file is a special workflow designed to automate the setup of this entire repository in your n8n instance.
+
+1. Import `wow.json` into your n8n instance.
+2. Configure your **GitHub** and **n8n API** credentials in the respective nodes.
+3. Execute the workflow.
+4. It will automatically scan this repository, find all `workflow.json` files, and create them in your instance.
+
+### Manual Import
 1. Create a new workflow in your n8n instance.
 2. Drag and drop the `workflow.json` file onto the canvas, or use the **"Import from File"** option in the menu.
 3. **Note:** You will need to re-link your local **Credentials**, as they are not included in the JSON export for security reasons.
