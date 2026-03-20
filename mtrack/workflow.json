@@ -104,7 +104,7 @@
       "typeVersion": 2.1,
       "position": [
         -224,
-        928
+        920
       ],
       "id": "4a579957-8f80-48c6-b4f0-ea29f9cdd1d5",
       "name": "Webhook",
@@ -217,7 +217,7 @@
       "typeVersion": 3.4,
       "position": [
         0,
-        928
+        920
       ],
       "id": "d8c3da21-4e82-4cbf-b7eb-4cdbe27d84f1",
       "name": "extract info"
@@ -313,7 +313,7 @@
       "typeVersion": 2.6,
       "position": [
         224,
-        736
+        728
       ],
       "id": "85625521-fc6f-403c-8b8f-ae2ad667627a",
       "name": "insert transaction",
@@ -334,7 +334,7 @@
       "typeVersion": 2.6,
       "position": [
         224,
-        976
+        968
       ],
       "id": "ce4549a9-123b-446c-a03f-572664cd487f",
       "name": "get last limit for the card",
@@ -354,7 +354,7 @@
       "typeVersion": 1,
       "position": [
         -224,
-        1200
+        1384
       ],
       "id": "3b116c72-33bc-4058-8c6e-8c6b8aad8ce8",
       "name": "."
@@ -371,7 +371,7 @@
       "typeVersion": 1.2,
       "position": [
         672,
-        976
+        968
       ],
       "id": "ff72bfa6-37a4-48d6-a881-6e98147a53f8",
       "name": "send alert",
@@ -411,7 +411,7 @@
       "typeVersion": 2.3,
       "position": [
         448,
-        976
+        968
       ],
       "id": "19c957ac-2f05-42c0-8406-2a4f7b576a0c",
       "name": "If"
@@ -430,7 +430,7 @@
       "typeVersion": 1.3,
       "position": [
         -672,
-        1200
+        1288
       ],
       "id": "a9f0938b-c0a8-4449-a87a-1eabe733f3a4",
       "name": "Daily Summary"
@@ -449,7 +449,7 @@
       "typeVersion": 1.2,
       "position": [
         448,
-        784
+        776
       ],
       "id": "83009497-cee3-4fe9-b99b-0ac79c0b4fd5",
       "name": "send ack",
@@ -551,8 +551,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -448,
-        1392
+        -224,
+        1576
       ],
       "id": "a5b052bc-308c-4415-b660-0f51682b94a7",
       "name": "get weekly transactions",
@@ -571,21 +571,21 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -224,
-        1392
+        0,
+        1576
       ],
       "id": "c2de3d52-f5a5-495a-bf76-9d96e8301ca4",
       "name": ".."
     },
     {
       "parameters": {
-        "jsCode": "const transactions = $input.first().json.data;\n\nlet message = \"📅 *Resoconto Spese di Oggi \" + DateTime.now().toISODate() + \"*\\n\\n\";\nlet grandTotal = 0;\n\nfor (const item of transactions) {\n  const amount = parseFloat(item.total_amount);\n  \n  grandTotal += amount;\n  message += `💳 *Carta ${item.card}:* ${amount.toFixed(2)}\\n`;\n}\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE COMPLESSIVO:* ${grandTotal.toFixed(2)}`;\n\nreturn {\n  json: {\n    telegram_text: message\n  }\n};"
+        "jsCode": "const transactions = $input.first().json.data;\n\nlet message = \"📅 *Resoconto Spese di Oggi \" + DateTime.now().toISODate() + \"*\\n\\n\";\nlet grandTotal = 0;\n\nfor (const item of transactions) {\n  const amount = parseFloat(item.total_amount);\n  \n  grandTotal += amount;\n  message += `💳 *Carta ${item.card}:* ${amount.toFixed(2)}\\n`;\n}\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE OGGI:* ${grandTotal.toFixed(2)}`;\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE MESE:* ${$input.first().json.total_amount}`;\n\nreturn {\n  json: {\n    telegram_text: message\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        1200
+        224,
+        1288
       ],
       "id": "8da1e7cb-9dfa-4036-a839-44b9a873f410",
       "name": "build daily message"
@@ -601,8 +601,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        224,
-        1392
+        448,
+        1576
       ],
       "id": "f7e38dbb-1cb8-4437-a276-7d6b5dc085e9",
       "name": "send report",
@@ -621,8 +621,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        1392
+        224,
+        1576
       ],
       "id": "5d2e5cc7-5110-4cfd-b302-6e673714698b",
       "name": "build weekly message"
@@ -641,8 +641,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -672,
-        1392
+        -448,
+        1576
       ],
       "id": "1313c145-46cf-4c76-a8c1-81020fc62e2e",
       "name": "Weekly Summary"
@@ -662,8 +662,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -672,
-        1584
+        -448,
+        1768
       ],
       "id": "419fb817-b946-4098-97de-975a48b880c9",
       "name": "Monthly Summary"
@@ -677,8 +677,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -448,
-        1584
+        -224,
+        1768
       ],
       "id": "197fd164-ff77-4d1b-949c-cb9e1a5a20e6",
       "name": "get monthly transactions",
@@ -699,7 +699,7 @@
       "typeVersion": 2.6,
       "position": [
         -448,
-        1200
+        1384
       ],
       "id": "c92354ef-4488-4233-8352-a7a32a14fecb",
       "name": "get daily transactions",
@@ -718,8 +718,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -224,
-        1584
+        0,
+        1768
       ],
       "id": "be074b9f-582c-4fff-98b0-af848397b46f",
       "name": "..."
@@ -731,8 +731,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        1584
+        224,
+        1768
       ],
       "id": "5b95c7b9-eab5-457f-aca9-1440189f1af9",
       "name": "build monthly message"
@@ -770,6 +770,42 @@
           "name": "MTRACK_Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT SUM(amount) AS total_amount\nFROM transactions\nWHERE created_at >= (\n    CASE\n      WHEN EXTRACT(DAY FROM current_date) >= 3\n        THEN date_trunc('month', current_date) + interval '2 days'\n      ELSE\n        date_trunc('month', current_date) - interval '1 month' + interval '2 days'\n    END\n)\nAND created_at < (\n    CASE\n      WHEN EXTRACT(DAY FROM current_date) >= 3\n        THEN date_trunc('month', current_date) + interval '2 days'\n      ELSE\n        date_trunc('month', current_date) - interval '1 month' + interval '2 days'\n    END\n) + interval '1 month';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -224,
+        1192
+      ],
+      "id": "e9b36267-486e-45f4-ab85-7d1797ec9694",
+      "name": "get monthly total so far",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "MTRACK_Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        0,
+        1288
+      ],
+      "id": "9949599b-fa4d-4481-9558-121d1909640d",
+      "name": "Merge1"
     }
   ],
   "pinData": {},
@@ -866,9 +902,9 @@
       "main": [
         [
           {
-            "node": "build daily message",
+            "node": "Merge1",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -890,6 +926,11 @@
         [
           {
             "node": "get daily transactions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "get monthly total so far",
             "type": "main",
             "index": 0
           }
@@ -1065,6 +1106,28 @@
           }
         ]
       ]
+    },
+    "get monthly total so far": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "build daily message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1073,7 +1136,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "1d2da0e2-e469-49b8-8322-31804627cdf7",
+  "versionId": "b18b392f-f0e5-468b-bdfd-eb6b13cdb445",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
