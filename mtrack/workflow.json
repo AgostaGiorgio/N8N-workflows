@@ -76,7 +76,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";\nCREATE TABLE transactions (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  description TEXT,\n  amount NUMERIC(12, 2) NOT NULL,\n  card TEXT,\n  card_limit NUMERIC(12, 2) NOT NULL\n)",
+        "query": "CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";\nCREATE TYPE category_type AS ENUM ('primary', 'secondary');\nCREATE TABLE categories (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  name TEXT UNIQUE NOT NULL,\n  type category_type NOT NULL,\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  UNIQUE (name, type) \n);\nCREATE TABLE category_mappings (\n  primary_id UUID REFERENCES categories(id) ON DELETE CASCADE,\n  secondary_id UUID REFERENCES categories(id) ON DELETE CASCADE,\n  PRIMARY KEY (primary_id, secondary_id)\n);\nCREATE TABLE transactions (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  description TEXT,\n  amount NUMERIC(12, 2) NOT NULL,\n  card TEXT,\n  card_limit NUMERIC(12, 2) NOT NULL,\n  primary_category UUID REFERENCES categories(id) ON DELETE SET NULL,\n  secondary_category UUID REFERENCES categories(id) ON DELETE SET NULL\n);\nCREATE OR REPLACE FUNCTION extract_merchant_name(tx_description TEXT)\nRETURNS TEXT AS $$\nBEGIN\n    RETURN trim(COALESCE(\n        substring(tx_description from ' at (.*?)\\. Avl'),\n        substring(tx_description from ' to (.*?) with Credit Card'),\n        tx_description \n    ));\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\nCREATE OR REPLACE FUNCTION predict_transaction_categories(\n    p_description TEXT, \n    OUT predicted_primary_id UUID, \n    OUT predicted_secondary_id UUID\n) AS $$\nDECLARE\n    v_merchant TEXT;\nBEGIN\n    v_merchant := extract_merchant_name(p_description);\n\n    SELECT primary_category_id, secondary_category_id\n    INTO predicted_primary_id, predicted_secondary_id\n    FROM transactions\n    WHERE extract_merchant_name(description) = v_merchant\n      AND primary_category_id IS NOT NULL\n    GROUP BY primary_category_id, secondary_category_id\n    ORDER BY count(*) DESC\n    LIMIT 1;\nEND;\n$$ LANGUAGE plpgsql;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -103,8 +103,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -224,
-        920
+        -448,
+        928
       ],
       "id": "4a579957-8f80-48c6-b4f0-ea29f9cdd1d5",
       "name": "Webhook",
@@ -216,8 +216,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        0,
-        920
+        -224,
+        928
       ],
       "id": "d8c3da21-4e82-4cbf-b7eb-4cdbe27d84f1",
       "name": "extract info"
@@ -238,11 +238,13 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "created_at": "={{ $json.date }}",
-            "description": "={{ $json.description }}",
-            "amount": "={{ $json.amount }}",
-            "card": "={{ $json.card }}",
-            "card_limit": "={{ $json.card_limit }}"
+            "created_at": "={{ $('extract info').item.json.date}}",
+            "description": "={{ $('extract info').item.json.description }}",
+            "amount": "={{ $('extract info').item.json.amount }}",
+            "card": "={{ $('extract info').item.json.card }}",
+            "card_limit": "={{ $('extract info').item.json.card_limit }}",
+            "primary_category_id": "={{ $json.predicted_primary_id }}",
+            "secondary_category_id": "={{ $json.predicted_secondary_id }}"
           },
           "matchingColumns": [
             "id"
@@ -302,6 +304,26 @@
               "display": true,
               "type": "number",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "primary_category_id",
+              "displayName": "primary_category_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "secondary_category_id",
+              "displayName": "secondary_category_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -313,7 +335,7 @@
       "typeVersion": 2.6,
       "position": [
         224,
-        728
+        688
       ],
       "id": "85625521-fc6f-403c-8b8f-ae2ad667627a",
       "name": "insert transaction",
@@ -333,8 +355,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        224,
-        968
+        0,
+        1072
       ],
       "id": "ce4549a9-123b-446c-a03f-572664cd487f",
       "name": "get last limit for the card",
@@ -354,7 +376,7 @@
       "typeVersion": 1,
       "position": [
         -224,
-        1384
+        1488
       ],
       "id": "3b116c72-33bc-4058-8c6e-8c6b8aad8ce8",
       "name": "."
@@ -370,8 +392,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        672,
-        968
+        448,
+        1072
       ],
       "id": "ff72bfa6-37a4-48d6-a881-6e98147a53f8",
       "name": "send alert",
@@ -410,8 +432,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        448,
-        968
+        224,
+        1072
       ],
       "id": "19c957ac-2f05-42c0-8406-2a4f7b576a0c",
       "name": "If"
@@ -430,7 +452,7 @@
       "typeVersion": 1.3,
       "position": [
         -672,
-        1288
+        1392
       ],
       "id": "a9f0938b-c0a8-4449-a87a-1eabe733f3a4",
       "name": "Daily Summary"
@@ -438,7 +460,7 @@
     {
       "parameters": {
         "chatId": "",
-        "text": "=💳 *Nuova transazione ricevuta*\n\n🕒 Data: {{$json.created_at}}\n💰 Importo: AED {{$json.amount}}\n💳 Carta: **** {{$json.card}}\n\n📊 Limite disponibile: AED {{$json.card_limit}}\n\n✅ Transazione registrata correttamente.",
+        "text": "=💳 *Nuova transazione ricevuta*\n\n🕒 Data: {{$json.created_at}}\n💰 Importo: AED {{$json.amount}}\n💳 Carta: **** {{$json.card}}\n📜 Categoria: {{ $json.primary_cat }}, {{ $json.secondary_cat }}\n\n📊 Limite disponibile: AED {{$json.card_limit}}\n\n✅ Transazione registrata correttamente.",
         "additionalFields": {
           "appendAttribution": false,
           "disable_notification": true,
@@ -448,8 +470,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        448,
-        776
+        672,
+        832
       ],
       "id": "83009497-cee3-4fe9-b99b-0ac79c0b4fd5",
       "name": "send ack",
@@ -552,7 +574,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1576
+        1680
       ],
       "id": "a5b052bc-308c-4415-b660-0f51682b94a7",
       "name": "get weekly transactions",
@@ -572,7 +594,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1576
+        1680
       ],
       "id": "c2de3d52-f5a5-495a-bf76-9d96e8301ca4",
       "name": ".."
@@ -585,7 +607,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1288
+        1392
       ],
       "id": "8da1e7cb-9dfa-4036-a839-44b9a873f410",
       "name": "build daily message"
@@ -602,7 +624,7 @@
       "typeVersion": 1.2,
       "position": [
         448,
-        1576
+        1680
       ],
       "id": "f7e38dbb-1cb8-4437-a276-7d6b5dc085e9",
       "name": "send report",
@@ -622,7 +644,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1576
+        1680
       ],
       "id": "5d2e5cc7-5110-4cfd-b302-6e673714698b",
       "name": "build weekly message"
@@ -642,7 +664,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1576
+        1680
       ],
       "id": "1313c145-46cf-4c76-a8c1-81020fc62e2e",
       "name": "Weekly Summary"
@@ -663,7 +685,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1768
+        1872
       ],
       "id": "419fb817-b946-4098-97de-975a48b880c9",
       "name": "Monthly Summary"
@@ -678,7 +700,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1768
+        1872
       ],
       "id": "197fd164-ff77-4d1b-949c-cb9e1a5a20e6",
       "name": "get monthly transactions",
@@ -699,7 +721,7 @@
       "typeVersion": 2.6,
       "position": [
         -448,
-        1384
+        1488
       ],
       "id": "c92354ef-4488-4233-8352-a7a32a14fecb",
       "name": "get daily transactions",
@@ -719,7 +741,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1768
+        1872
       ],
       "id": "be074b9f-582c-4fff-98b0-af848397b46f",
       "name": "..."
@@ -732,7 +754,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1768
+        1872
       ],
       "id": "5b95c7b9-eab5-457f-aca9-1440189f1af9",
       "name": "build monthly message"
@@ -781,7 +803,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1192
+        1296
       ],
       "id": "e9b36267-486e-45f4-ab85-7d1797ec9694",
       "name": "get monthly total so far",
@@ -802,10 +824,67 @@
       "typeVersion": 3.2,
       "position": [
         0,
-        1288
+        1392
       ],
       "id": "9949599b-fa4d-4481-9558-121d1909640d",
       "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM predict_transaction_categories('{{ $json.description }}');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        832
+      ],
+      "id": "ae554142-7a31-47ff-9ece-2752fdc83eea",
+      "name": "predict categories",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "MTRACK_Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        832
+      ],
+      "id": "68f08718-5f12-4808-807b-3ac24560d663",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_primary_id }}') AS primary_cat,\n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_secondary_id }}') AS secondary_cat;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        880
+      ],
+      "id": "f5bc5854-142a-40b1-9c38-f208a3eec19a",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "MTRACK_Postgres"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -859,12 +938,12 @@
       "main": [
         [
           {
-            "node": "insert transaction",
+            "node": "get last limit for the card",
             "type": "main",
             "index": 0
           },
           {
-            "node": "get last limit for the card",
+            "node": "predict categories",
             "type": "main",
             "index": 0
           }
@@ -875,14 +954,14 @@
       "main": [
         [
           {
-            "node": "send ack",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Merge",
             "type": "main",
             "index": 1
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1128,6 +1207,44 @@
           }
         ]
       ]
+    },
+    "predict categories": {
+      "main": [
+        [
+          {
+            "node": "insert transaction",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "send ack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1136,7 +1253,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b18b392f-f0e5-468b-bdfd-eb6b13cdb445",
+  "versionId": "b9391e37-549d-4eb6-92f2-4024775c28df",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
