@@ -103,8 +103,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -448,
-        928
+        -672,
+        896
       ],
       "id": "4a579957-8f80-48c6-b4f0-ea29f9cdd1d5",
       "name": "Webhook",
@@ -216,8 +216,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -224,
-        928
+        -448,
+        896
       ],
       "id": "d8c3da21-4e82-4cbf-b7eb-4cdbe27d84f1",
       "name": "extract info"
@@ -334,8 +334,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        224,
-        688
+        448,
+        584
       ],
       "id": "85625521-fc6f-403c-8b8f-ae2ad667627a",
       "name": "insert transaction",
@@ -355,8 +355,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        1072
+        -224,
+        1064
       ],
       "id": "ce4549a9-123b-446c-a03f-572664cd487f",
       "name": "get last limit for the card",
@@ -376,7 +376,7 @@
       "typeVersion": 1,
       "position": [
         -224,
-        1488
+        1480
       ],
       "id": "3b116c72-33bc-4058-8c6e-8c6b8aad8ce8",
       "name": "."
@@ -392,8 +392,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        448,
-        1072
+        224,
+        1064
       ],
       "id": "ff72bfa6-37a4-48d6-a881-6e98147a53f8",
       "name": "send alert",
@@ -432,8 +432,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        224,
-        1072
+        0,
+        1064
       ],
       "id": "19c957ac-2f05-42c0-8406-2a4f7b576a0c",
       "name": "If"
@@ -452,7 +452,7 @@
       "typeVersion": 1.3,
       "position": [
         -672,
-        1392
+        1384
       ],
       "id": "a9f0938b-c0a8-4449-a87a-1eabe733f3a4",
       "name": "Daily Summary"
@@ -470,8 +470,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        672,
-        832
+        896,
+        800
       ],
       "id": "83009497-cee3-4fe9-b99b-0ac79c0b4fd5",
       "name": "send ack",
@@ -485,80 +485,12 @@
     },
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.3,
-      "position": [
-        -672,
-        560
-      ],
-      "id": "517fc5a5-c2ed-44a8-b2ba-c02acebc710b",
-      "name": "check for manual insert"
-    },
-    {
-      "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nreturn [{ 'offset': staticData.mtrack_telegram_offset || 0 }]"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -448,
-        560
-      ],
-      "id": "c5f815f5-7736-4509-97db-fb7fa10051f0",
-      "name": "get last offset"
-    },
-    {
-      "parameters": {
-        "url": "https://api.telegram.org/bot<BOT_ID>/getUpdates?timeout=XX&offset=YYY",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "offset",
-              "value": "={{ $json.offset }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        -224,
-        560
-      ],
-      "id": "304cba2b-f297-48b0-a83b-28f8ab20f23a",
-      "name": "get messages from telegram"
-    },
-    {
-      "parameters": {
-        "jsCode": "let messages = [];\n\nconst regex = /Incongruenza rilevata per Carta\\s+(\\d{4})[\\s\\S]*?Ultimo Limite\\s*→\\s*(\\d+(?:\\.\\d+)?)\\s*AED[\\s\\S]*?Differenza\\s*→\\s*(\\d+(?:\\.\\d+)?)\\s*AED/;\n\nfor (const item of $input.first().json.result) {\n  const replyText = item.message?.reply_to_message?.text;\n  const date = item.message?.text;\n\n  if (replyText && regex.test(replyText)) {\n    const match = replyText.match(regex);\n\n    if (match){\n      const card = match[1];\n      const lastLimit = parseFloat(match[2]);\n      const amount = parseFloat(match[3]);\n      \n      const card_limit = (lastLimit - amount).toFixed(2);\n\n      messages.push({\n        card,\n        card_limit: parseFloat(card_limit),\n        amount,\n        date: date.replace(\" \", \"T\") + \":00Z\",\n        \"description\": \"Manual transaction\",\n        \"update_id\": item.update_id\n      });\n    }\n  }\n}\n\nreturn messages;"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        0,
-        560
-      ],
-      "id": "52cb6719-39a3-494a-ac4a-259abd4fcc47",
-      "name": "extract and build manual transactions"
-    },
-    {
-      "parameters": {
         "mode": "chooseBranch"
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        448,
+        672,
         560
       ],
       "id": "c24a4114-bfcb-468c-841e-1d3085aa4498",
@@ -574,7 +506,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1680
+        1672
       ],
       "id": "a5b052bc-308c-4415-b660-0f51682b94a7",
       "name": "get weekly transactions",
@@ -594,7 +526,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1680
+        1672
       ],
       "id": "c2de3d52-f5a5-495a-bf76-9d96e8301ca4",
       "name": ".."
@@ -607,7 +539,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1392
+        1384
       ],
       "id": "8da1e7cb-9dfa-4036-a839-44b9a873f410",
       "name": "build daily message"
@@ -624,7 +556,7 @@
       "typeVersion": 1.2,
       "position": [
         448,
-        1680
+        1672
       ],
       "id": "f7e38dbb-1cb8-4437-a276-7d6b5dc085e9",
       "name": "send report",
@@ -644,7 +576,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1680
+        1672
       ],
       "id": "5d2e5cc7-5110-4cfd-b302-6e673714698b",
       "name": "build weekly message"
@@ -664,7 +596,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1680
+        1672
       ],
       "id": "1313c145-46cf-4c76-a8c1-81020fc62e2e",
       "name": "Weekly Summary"
@@ -685,7 +617,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1872
+        1864
       ],
       "id": "419fb817-b946-4098-97de-975a48b880c9",
       "name": "Monthly Summary"
@@ -700,7 +632,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1872
+        1864
       ],
       "id": "197fd164-ff77-4d1b-949c-cb9e1a5a20e6",
       "name": "get monthly transactions",
@@ -721,7 +653,7 @@
       "typeVersion": 2.6,
       "position": [
         -448,
-        1488
+        1480
       ],
       "id": "c92354ef-4488-4233-8352-a7a32a14fecb",
       "name": "get daily transactions",
@@ -741,7 +673,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1872
+        1864
       ],
       "id": "be074b9f-582c-4fff-98b0-af848397b46f",
       "name": "..."
@@ -754,7 +686,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1872
+        1864
       ],
       "id": "5b95c7b9-eab5-457f-aca9-1440189f1af9",
       "name": "build monthly message"
@@ -766,7 +698,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        896,
         560
       ],
       "id": "6c609646-6030-4be4-be68-80aa017cdedd",
@@ -803,7 +735,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1296
+        1288
       ],
       "id": "e9b36267-486e-45f4-ab85-7d1797ec9694",
       "name": "get monthly total so far",
@@ -824,7 +756,7 @@
       "typeVersion": 3.2,
       "position": [
         0,
-        1392
+        1384
       ],
       "id": "9949599b-fa4d-4481-9558-121d1909640d",
       "name": "Merge1"
@@ -838,8 +770,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        832
+        -224,
+        752
       ],
       "id": "ae554142-7a31-47ff-9ece-2752fdc83eea",
       "name": "predict categories",
@@ -859,8 +791,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        448,
-        832
+        672,
+        800
       ],
       "id": "68f08718-5f12-4808-807b-3ac24560d663",
       "name": "Merge2"
@@ -868,17 +800,72 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_primary_id }}') AS primary_cat,\n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_secondary_id }}') AS secondary_cat;",
+        "query": "SELECT \n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_primary_id }}') AS primary_cat,\n    (SELECT name FROM categories WHERE id = '{{ $json.predicted_secondary_id ? $json.predicted_secondary_id :\"00000000-0000-0000-0000-000000000000\" }}') AS secondary_cat;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        848
+      ],
+      "id": "f5bc5854-142a-40b1-9c38-f208a3eec19a",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "ckx5wf1LMqYDiPUG",
+          "name": "MTRACK_Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7aec5b26-86f2-41f9-934b-aad36b8092ca",
+              "leftValue": "={{ $json.predicted_primary_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        752
+      ],
+      "id": "093b6621-5830-4929-8c01-8108f4cc937d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id as predicted_primary_id , NULL as predicted_secondary_id\nFROM categories\nWHERE name = 'Other'",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
         224,
-        880
+        752
       ],
-      "id": "f5bc5854-142a-40b1-9c38-f208a3eec19a",
-      "name": "Execute a SQL query",
+      "id": "cf2d521c-4f89-4f64-9156-21c92674a866",
+      "name": "Execute a SQL query1",
       "credentials": {
         "postgres": {
           "id": "ckx5wf1LMqYDiPUG",
@@ -1010,55 +997,6 @@
           },
           {
             "node": "get monthly total so far",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "check for manual insert": {
-      "main": [
-        [
-          {
-            "node": "get last offset",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "get last offset": {
-      "main": [
-        [
-          {
-            "node": "get messages from telegram",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "get messages from telegram": {
-      "main": [
-        [
-          {
-            "node": "extract and build manual transactions",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "extract and build manual transactions": {
-      "main": [
-        [
-          {
-            "node": "insert transaction",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge",
             "type": "main",
             "index": 0
           }
@@ -1212,12 +1150,7 @@
       "main": [
         [
           {
-            "node": "insert transaction",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Execute a SQL query",
+            "node": "If1",
             "type": "main",
             "index": 0
           }
@@ -1245,6 +1178,45 @@
           }
         ]
       ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "insert transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "insert transaction",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1253,7 +1225,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b9391e37-549d-4eb6-92f2-4024775c28df",
+  "versionId": "cc9143c5-ef67-4f48-a569-1e6a1d31d5cf",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
