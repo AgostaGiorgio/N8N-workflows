@@ -394,7 +394,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 0 12 3 * *"
+              "expression": "0 0 12 3,17 * *"
             }
           ]
         }
@@ -608,32 +608,14 @@
       ],
       "id": "b62c5fdc-3a65-4127-bce5-a776c8aae9ee",
       "name": "save portfolio history",
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "AVfQqj8EbPgEXiAg",
           "name": "MYINVES_Postgres"
         }
-      }
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 0 12 17 * *"
-            }
-          ]
-        }
       },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.3,
-      "position": [
-        -272,
-        112
-      ],
-      "id": "4ae3b333-cd6f-4cc1-9f8a-3a00f582cc86",
-      "name": "Schedule Trigger1"
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
@@ -844,27 +826,6 @@
           }
         ]
       ]
-    },
-    "Schedule Trigger1": {
-      "main": [
-        [
-          {
-            "node": "get IWDA",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "get AED, XAU, USD",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "get Assets id",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": true,
@@ -873,7 +834,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "5868a009-f1d4-4d3f-a7da-3bf3c12a1a85",
+  "versionId": "22e62bf4-5180-4b47-b765-29a6c4f77823",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
