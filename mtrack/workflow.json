@@ -104,7 +104,7 @@
       "typeVersion": 2.1,
       "position": [
         -672,
-        896
+        848
       ],
       "id": "4a579957-8f80-48c6-b4f0-ea29f9cdd1d5",
       "name": "Webhook",
@@ -217,7 +217,7 @@
       "typeVersion": 3.4,
       "position": [
         -448,
-        896
+        848
       ],
       "id": "d8c3da21-4e82-4cbf-b7eb-4cdbe27d84f1",
       "name": "extract info"
@@ -335,7 +335,7 @@
       "typeVersion": 2.6,
       "position": [
         448,
-        584
+        560
       ],
       "id": "85625521-fc6f-403c-8b8f-ae2ad667627a",
       "name": "insert transaction",
@@ -356,7 +356,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1064
+        1016
       ],
       "id": "ce4549a9-123b-446c-a03f-572664cd487f",
       "name": "get last limit for the card",
@@ -376,7 +376,7 @@
       "typeVersion": 1,
       "position": [
         -224,
-        1480
+        1432
       ],
       "id": "3b116c72-33bc-4058-8c6e-8c6b8aad8ce8",
       "name": "."
@@ -393,7 +393,7 @@
       "typeVersion": 1.2,
       "position": [
         224,
-        1064
+        1016
       ],
       "id": "ff72bfa6-37a4-48d6-a881-6e98147a53f8",
       "name": "send alert",
@@ -433,7 +433,7 @@
       "typeVersion": 2.3,
       "position": [
         0,
-        1064
+        1016
       ],
       "id": "19c957ac-2f05-42c0-8406-2a4f7b576a0c",
       "name": "If"
@@ -452,7 +452,7 @@
       "typeVersion": 1.3,
       "position": [
         -672,
-        1384
+        1336
       ],
       "id": "a9f0938b-c0a8-4449-a87a-1eabe733f3a4",
       "name": "Daily Summary"
@@ -471,7 +471,7 @@
       "typeVersion": 1.2,
       "position": [
         896,
-        800
+        680
       ],
       "id": "83009497-cee3-4fe9-b99b-0ac79c0b4fd5",
       "name": "send ack",
@@ -485,19 +485,6 @@
     },
     {
       "parameters": {
-        "mode": "chooseBranch"
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        672,
-        560
-      ],
-      "id": "c24a4114-bfcb-468c-841e-1d3085aa4498",
-      "name": "Merge"
-    },
-    {
-      "parameters": {
         "operation": "executeQuery",
         "query": "WITH boundaries AS (\n  SELECT\n    CASE\n      WHEN EXTRACT(DAY FROM current_date) >= 3\n        THEN date_trunc('month', current_date) + interval '2 days'\n      ELSE\n        date_trunc('month', current_date) - interval '1 month' + interval '2 days'\n    END AS bank_start\n),\nweek_calc AS (\n  SELECT\n    GREATEST(\n      date_trunc('week', current_date),\n      bank_start\n    ) AS week_start,\n    LEAST(\n      date_trunc('week', current_date) + interval '7 days',\n      bank_start + interval '1 month'\n    ) AS week_end\n  FROM boundaries\n)\nSELECT SUM(amount) AS total_amount, card\nFROM transactions, week_calc\nWHERE created_at >= week_start\n  AND created_at < week_end\nGROUP BY card;\n",
         "options": {}
@@ -506,7 +493,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1672
+        1624
       ],
       "id": "a5b052bc-308c-4415-b660-0f51682b94a7",
       "name": "get weekly transactions",
@@ -526,7 +513,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1672
+        1624
       ],
       "id": "c2de3d52-f5a5-495a-bf76-9d96e8301ca4",
       "name": ".."
@@ -539,7 +526,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        1384
+        1336
       ],
       "id": "8da1e7cb-9dfa-4036-a839-44b9a873f410",
       "name": "build daily message"
@@ -556,7 +543,7 @@
       "typeVersion": 1.2,
       "position": [
         448,
-        1672
+        1624
       ],
       "id": "f7e38dbb-1cb8-4437-a276-7d6b5dc085e9",
       "name": "send report",
@@ -567,19 +554,6 @@
           "name": "Mtrack-bot"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "const transactions = $input.first().json.data;\n\nlet message = \"📅 *Resoconto Spese della Settimana*\\n\\n\";\nlet grandTotal = 0;\n\n// (Opzionale) Ordina le carte per importo decrescente\ntransactions.sort((a, b) => parseFloat(b.total_amount) - parseFloat(a.total_amount));\n\nfor (const item of transactions) {\n  const amount = parseFloat(item.total_amount) || 0;\n  grandTotal += amount;\n\n  message += `💳 *Carta ${item.card}:* ${amount.toFixed(2)} AED\\n`;\n}\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE COMPLESSIVO:* ${grandTotal.toFixed(2)} AED`;\n\nreturn {\n  json: {\n    telegram_text: message\n  }\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        1672
-      ],
-      "id": "5d2e5cc7-5110-4cfd-b302-6e673714698b",
-      "name": "build weekly message"
     },
     {
       "parameters": {
@@ -596,7 +570,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1672
+        1624
       ],
       "id": "1313c145-46cf-4c76-a8c1-81020fc62e2e",
       "name": "Weekly Summary"
@@ -617,7 +591,7 @@
       "typeVersion": 1.3,
       "position": [
         -448,
-        1864
+        1816
       ],
       "id": "419fb817-b946-4098-97de-975a48b880c9",
       "name": "Monthly Summary"
@@ -632,7 +606,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1864
+        1816
       ],
       "id": "197fd164-ff77-4d1b-949c-cb9e1a5a20e6",
       "name": "get monthly transactions",
@@ -653,7 +627,7 @@
       "typeVersion": 2.6,
       "position": [
         -448,
-        1480
+        1432
       ],
       "id": "c92354ef-4488-4233-8352-a7a32a14fecb",
       "name": "get daily transactions",
@@ -673,7 +647,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        1864
+        1816
       ],
       "id": "be074b9f-582c-4fff-98b0-af848397b46f",
       "name": "..."
@@ -686,23 +660,10 @@
       "typeVersion": 2,
       "position": [
         224,
-        1864
+        1816
       ],
       "id": "5b95c7b9-eab5-457f-aca9-1440189f1af9",
       "name": "build monthly message"
-    },
-    {
-      "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\n\nstaticData.mtrack_telegram_offset = $input.first().json.update_id + 1;\nreturn []"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        896,
-        560
-      ],
-      "id": "6c609646-6030-4be4-be68-80aa017cdedd",
-      "name": "Save new offset"
     },
     {
       "parameters": {
@@ -735,7 +696,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        1288
+        1240
       ],
       "id": "e9b36267-486e-45f4-ab85-7d1797ec9694",
       "name": "get monthly total so far",
@@ -756,7 +717,7 @@
       "typeVersion": 3.2,
       "position": [
         0,
-        1384
+        1336
       ],
       "id": "9949599b-fa4d-4481-9558-121d1909640d",
       "name": "Merge1"
@@ -771,7 +732,7 @@
       "typeVersion": 2.6,
       "position": [
         -224,
-        752
+        704
       ],
       "id": "ae554142-7a31-47ff-9ece-2752fdc83eea",
       "name": "predict categories",
@@ -792,7 +753,7 @@
       "typeVersion": 3.2,
       "position": [
         672,
-        800
+        680
       ],
       "id": "68f08718-5f12-4808-807b-3ac24560d663",
       "name": "Merge2"
@@ -807,7 +768,7 @@
       "typeVersion": 2.6,
       "position": [
         448,
-        848
+        800
       ],
       "id": "f5bc5854-142a-40b1-9c38-f208a3eec19a",
       "name": "Execute a SQL query",
@@ -847,7 +808,7 @@
       "typeVersion": 2.3,
       "position": [
         0,
-        752
+        704
       ],
       "id": "093b6621-5830-4929-8c01-8108f4cc937d",
       "name": "If1"
@@ -862,7 +823,7 @@
       "typeVersion": 2.6,
       "position": [
         224,
-        752
+        680
       ],
       "id": "cf2d521c-4f89-4f64-9156-21c92674a866",
       "name": "Execute a SQL query1",
@@ -872,6 +833,19 @@
           "name": "MTRACK_Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const transactions = $input.first().json.data;\n\nlet message = \"📅 *Resoconto Spese della Settimana*\\n\\n\";\nlet grandTotal = 0;\n\n// (Opzionale) Ordina le carte per importo decrescente\ntransactions.sort((a, b) => parseFloat(b.total_amount) - parseFloat(a.total_amount));\n\nfor (const item of transactions) {\n  const amount = parseFloat(item.total_amount) || 0;\n  grandTotal += amount;\n\n  message += `💳 *Carta ${item.card}:* ${amount.toFixed(2)} AED\\n`;\n}\n\nmessage += `\\n➖➖➖➖➖➖➖➖\\n`;\nmessage += `💰 *TOTALE COMPLESSIVO:* ${grandTotal.toFixed(2)} AED`;\n\nreturn {\n  json: {\n    telegram_text: message\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1624
+      ],
+      "id": "5d2e5cc7-5110-4cfd-b302-6e673714698b",
+      "name": "build weekly message"
     }
   ],
   "pinData": {},
@@ -941,11 +915,6 @@
       "main": [
         [
           {
-            "node": "Merge",
-            "type": "main",
-            "index": 1
-          },
-          {
             "node": "Merge2",
             "type": "main",
             "index": 0
@@ -1003,17 +972,6 @@
         ]
       ]
     },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "Save new offset",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "get weekly transactions": {
       "main": [
         [
@@ -1037,17 +995,6 @@
       ]
     },
     "build daily message": {
-      "main": [
-        [
-          {
-            "node": "send report",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "build weekly message": {
       "main": [
         [
           {
@@ -1217,6 +1164,17 @@
           }
         ]
       ]
+    },
+    "build weekly message": {
+      "main": [
+        [
+          {
+            "node": "send report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1225,7 +1183,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "cc9143c5-ef67-4f48-a569-1e6a1d31d5cf",
+  "versionId": "241652df-f2b0-4422-85fc-39bc2bb3d97b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9dee3f7e1f21e37827f81b53f114e0a9add17e2051f68706e2bb915dde28e651"
